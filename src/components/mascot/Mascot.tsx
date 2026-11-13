@@ -85,7 +85,8 @@ export default function Mascot({ mood = 'idle', size = 240, basePath = '/mascot/
         <motion.div variants={tailV} animate={mood} style={{ ...place(LAYERS.tail), ...pivot(LAYERS.tail) }}>
           <img src={`${basePath}${LAYERS.tail.file}`} alt="" draggable={false} style={imageStyle} />
         </motion.div>
-        <div style={place(LAYERS.body)}><img src={`${basePath}${LAYERS.body.file}`} alt="" draggable={false} style={imageStyle} /></div>
+        <div style={place(LAYERS.bodyOpen)}><img src={`${basePath}${LAYERS.bodyOpen.file}`} alt="" draggable={false} style={imageStyle} /></div>
+        <div style={place(LAYERS.legs)}><img src={`${basePath}${LAYERS.legs.file}`} alt="" draggable={false} style={imageStyle} /></div>
         <motion.div variants={headV} animate={mood} style={{ position: 'absolute', inset: 0, originX: HEAD_PIVOT.x / CANVAS.w, originY: HEAD_PIVOT.y / CANVAS.h }}>
           <div style={place(LAYERS.head)}><img src={`${basePath}${LAYERS.head.file}`} alt="" draggable={false} style={imageStyle} /></div>
           <motion.div
