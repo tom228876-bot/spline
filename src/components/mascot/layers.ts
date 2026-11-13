@@ -7,7 +7,7 @@ export type Layer = { file: string; x: number; y: number; w: number; h: number; 
 export const LAYERS: Record<'tail' | 'body' | 'bodyOpen' | 'legs' | 'head' | 'eyeL' | 'eyeR' | 'tassel', Layer> = {
   tail: { file: 'tail.webp', x: 839, y: 843, w: 261, h: 297, px: 850, py: 1085 },
   body: { file: 'body.webp', x: 35, y: 640, w: 1184, h: 610 },
-  bodyOpen: { file: 'body-open-arms-trim.png', x: 140, y: 545, w: 960, h: 720 },
+  bodyOpen: { file: 'body-open-arms-clean.png', x: 140, y: 510, w: 960, h: 720 },
   legs: { file: 'body-legs.webp', x: 35, y: 1080, w: 1184, h: 170 },
   head: { file: 'head.webp', x: 0, y: 0, w: 1221, h: 665 },
   eyeL: { file: 'eyeL.webp', x: 411, y: 342, w: 185, h: 169, px: 503, py: 426 },
