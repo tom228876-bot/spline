@@ -11,6 +11,6 @@ export const LAYERS: Record<'tail' | 'body' | 'bodyOpen' | 'legs' | 'head' | 'ey
   legs: { file: 'body-legs-clean.png', x: 35, y: 1080, w: 1184, h: 170 },
   head: { file: 'head-clean.png', x: 0, y: 0, w: 1221, h: 665 },
   eyeL: { file: 'eyeL-clean.png', x: 411, y: 342, w: 185, h: 169, px: 503, py: 426 },
-  eyeR: { file: 'eyeR.webp', x: 680, y: 307, w: 173, h: 157, px: 766, py: 385 },
+  eyeR: { file: 'eyeR-clean.png', x: 680, y: 307, w: 173, h: 157, px: 766, py: 385 },
   tassel: { file: 'tassel-clean.png', x: 143, y: 126, w: 190, h: 391, px: 305, py: 140 },
 };
