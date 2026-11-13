@@ -1,179 +1,144 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { CANVAS, HEAD_PIVOT, LAYERS, type Layer } from './layers';
 
 export type MascotMood = 'idle' | 'happy' | 'sad' | 'thinking' | 'wave';
 
 type MascotProps = {
   mood?: MascotMood;
-  size?: number; // প্রস্থ (px)
-  basePath?: string;
+  size?: number;
+  src?: string;
   className?: string;
 };
 
-const loop = (duration: number) => ({
-  repeat: Infinity,
-  duration,
-  ease: 'easeInOut' as const,
-});
-
-// পুরো শরীর: শ্বাস নেওয়া, লাফ, নুয়ে পড়া
-const rootV: Variants = {
-  idle: { y: 0, scaleX: 1, scaleY: [1, 1.012, 1], transition: loop(3.2) },
-  happy: {
-    y: [0, 5, -60, 0, -22, 0],
-    scaleY: [1, 0.94, 1.06, 0.96, 1.02, 1],
-    scaleX: [1, 1.04, 0.97, 1.03, 1, 1],
-    transition: { duration: 1.1, ease: 'easeOut' },
-  },
-  sad: { y: 6, scaleX: 1, scaleY: 0.985, transition: { duration: 0.6 } },
-  thinking: { y: 0, scaleX: 1, scaleY: [1, 1.01, 1], transition: loop(3.6) },
-  wave: { y: [0, -14, 0], scaleX: 1, scaleY: 1, transition: { duration: 0.9 } },
+const bodyV: Variants = {
+  idle: { y: [0, -2, 0], scaleY: [1, 1.008, 1], transition: { repeat: Infinity, duration: 3.4, ease: 'easeInOut' } },
+  happy: { y: [0, 5, -16, 0], scaleY: [1, 0.97, 1.025, 1], transition: { duration: 0.9, ease: 'easeOut' } },
+  sad: { y: 5, scaleY: 0.985, transition: { duration: 0.55, ease: 'easeOut' } },
+  thinking: { y: [0, -1, 0], transition: { repeat: Infinity, duration: 2.8, ease: 'easeInOut' } },
+  wave: { y: [0, -5, 0], transition: { duration: 0.7, ease: 'easeOut' } },
 };
 
-// মাথা: ঘাড়ের কাছে ঘোরে
-const headV: Variants = {
-  idle: { rotate: [-1.5, 1.5, -1.5], y: [0, -3, 0], transition: loop(4.5) },
-  happy: { rotate: [0, -7, 6, -4, 0], y: [0, -6, 0], transition: { duration: 1.1 } },
-  sad: { rotate: -6, y: 12, transition: { duration: 0.7 } },
-  thinking: { rotate: [5, 7, 5], y: 0, transition: loop(3) },
-  wave: { rotate: [0, -6, 6, -6, 0], y: 0, transition: { duration: 1 } },
+const wingV: Variants = {
+  idle: { rotate: [0, -1.5, 0], transition: { repeat: Infinity, duration: 3, ease: 'easeInOut' } },
+  happy: { rotate: [0, -9, 7, -5, 0], y: [0, -5, 0, -2, 0], transition: { duration: 0.95, ease: 'easeInOut' } },
+  sad: { rotate: 5, y: 7, transition: { duration: 0.55 } },
+  thinking: { rotate: [0, 2, 0], transition: { repeat: Infinity, duration: 2.4, ease: 'easeInOut' } },
+  wave: { rotate: [0, -18, 8, -15, 0], y: [0, -7, 0, -5, 0], transition: { duration: 1.1, ease: 'easeInOut' } },
 };
 
-// লেজ (বেশি ঘোরালে গোড়ায় ফাঁক দেখা যায়, তাই ±৬° এর মধ্যে রাখা)
-const tailV: Variants = {
-  idle: { rotate: [-3, 4, -3], transition: loop(3) },
-  happy: { rotate: [-6, 6, -6, 6, -5, 0], transition: { duration: 0.9 } },
-  sad: { rotate: 4, transition: { duration: 0.6 } },
-  thinking: { rotate: [-2, 3, -2], transition: loop(4) },
-  wave: { rotate: [-5, 5, -5, 5, 0], transition: { duration: 1 } },
+const browV: Variants = {
+  idle: { rotate: 0, y: 0, transition: { duration: 0.25 } },
+  happy: { rotate: -7, y: 8, transition: { duration: 0.35 } },
+  sad: { rotate: 10, y: 9, transition: { duration: 0.35 } },
+  thinking: { rotate: -9, y: 3, transition: { duration: 0.35 } },
+  wave: { rotate: -2, y: 0, transition: { duration: 0.25 } },
 };
 
-// ট্যাসেল
-const tasselV: Variants = {
-  idle: { rotate: [-3, 3, -3], transition: loop(3.4) },
-  happy: { rotate: [-14, 12, -9, 6, -3, 0], transition: { duration: 1.1 } },
-  sad: { rotate: 2, transition: { duration: 0.6 } },
-  thinking: { rotate: [-2, 2, -2], transition: loop(4) },
-  wave: { rotate: [-8, 8, -8, 0], transition: { duration: 1 } },
-};
-
-function placement(l: Layer) {
-  return {
-    position: 'absolute' as const,
-    left: `${(l.x / CANVAS.w) * 100}%`,
-    top: `${(l.y / CANVAS.h) * 100}%`,
-    width: `${(l.w / CANVAS.w) * 100}%`,
-    height: `${(l.h / CANVAS.h) * 100}%`,
-  };
-}
-
-function origin(l: Layer) {
-  return {
-    originX: ((l.px ?? l.x + l.w / 2) - l.x) / l.w,
-    originY: ((l.py ?? l.y + l.h / 2) - l.y) / l.h,
-  };
-}
-
-const imgStyle = { width: '100%', height: '100%', display: 'block', pointerEvents: 'none' as const };
-
-// মাঝে মাঝে পলক ফেলা
 function useBlink() {
   const [blink, setBlink] = useState(false);
   useEffect(() => {
-    let t1: ReturnType<typeof setTimeout>;
-    let t2: ReturnType<typeof setTimeout>;
+    let openTimer: ReturnType<typeof setTimeout>;
+    let closeTimer: ReturnType<typeof setTimeout>;
     const schedule = () => {
-      t1 = setTimeout(() => {
+      openTimer = setTimeout(() => {
         setBlink(true);
-        t2 = setTimeout(() => {
+        closeTimer = setTimeout(() => {
           setBlink(false);
           schedule();
-        }, 130);
-      }, 2200 + Math.random() * 3000);
+        }, 115);
+      }, 2400 + Math.random() * 2800);
     };
     schedule();
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      clearTimeout(openTimer);
+      clearTimeout(closeTimer);
     };
   }, []);
   return blink;
 }
 
-export default function Mascot({
-  mood = 'idle',
-  size = 240,
-  basePath = '/mascot/layers/',
-  className,
-}: MascotProps) {
-  const blink = useBlink();
-  const eyeScale = blink ? 0.08 : mood === 'happy' ? 0.6 : mood === 'sad' ? 0.88 : 1;
-  const eyeAnim = { scaleY: eyeScale };
-  const eyeTransition = { duration: 0.08 };
-
-  const src = (l: Layer) => `${basePath}${l.file}`;
+function Eye({ side, mood, blink }: { side: 'left' | 'right'; mood: MascotMood; blink: boolean }) {
+  const isLeft = side === 'left';
+  const gaze = mood === 'thinking' ? (isLeft ? -5 : -7) : mood === 'sad' ? (isLeft ? -2 : 2) : 0;
+  const blinkScale = blink ? 0.08 : mood === 'happy' ? 0.62 : mood === 'sad' ? 0.78 : 1;
 
   return (
-    <div
-      className={className}
-      style={{ position: 'relative', width: size, aspectRatio: `${CANVAS.w} / ${CANVAS.h}` }}
-      role="img"
-      aria-label="Neura Academy mascot"
+    <motion.div
+      aria-hidden="true"
+      animate={{ x: gaze, scaleY: blinkScale }}
+      transition={{ type: 'spring', stiffness: 260, damping: 22, duration: 0.16 }}
+      style={{
+        position: 'absolute', left: isLeft ? '35.1%' : '61.8%', top: '34.9%', width: '9.9%', height: '10.8%',
+        borderRadius: '50%', background: 'linear-gradient(#070b19 0 58%, #02040b 59% 100%)',
+        boxShadow: '0 0 0 3px rgba(8,12,32,.18)', transformOrigin: '50% 50%',
+      }}
     >
+      <span style={{ position: 'absolute', width: '24%', height: '24%', left: '18%', top: '12%', borderRadius: '50%', background: '#fff' }} />
+      <span style={{ position: 'absolute', width: '11%', height: '11%', left: '50%', top: '24%', borderRadius: '50%', background: '#fff', opacity: 0.8 }} />
+    </motion.div>
+  );
+}
+
+function Beak({ mood }: { mood: MascotMood }) {
+  const talking = mood === 'happy' || mood === 'wave';
+  return (
+    <motion.div
+      aria-hidden="true"
+      animate={talking ? { scaleY: [1, 0.82, 1], y: [0, 2, 0] } : { scaleY: 1, y: 0 }}
+      transition={talking ? { repeat: Infinity, duration: 0.46, ease: 'easeInOut' } : { duration: 0.2 }}
+      style={{
+        position: 'absolute', left: '47.1%', top: '39.8%', width: '5.6%', height: '4.9%',
+        transformOrigin: '50% 25%', clipPath: 'polygon(50% 0, 100% 48%, 50% 100%, 0 48%)',
+        background: 'linear-gradient(145deg, #ffd66a, #e28a16 68%, #b75c09)', filter: 'drop-shadow(0 2px 1px rgba(70,30,0,.22))',
+      }}
+    />
+  );
+}
+
+export default function Mascot({ mood = 'idle', size = 240, src = '/mascot/owl-neutral.png', className }: MascotProps) {
+  const blink = useBlink();
+  const eyeKey = useMemo(() => `${mood}-${blink}`, [mood, blink]);
+
+  return (
+    <motion.div
+      className={className}
+      style={{ position: 'relative', width: size, aspectRatio: '2 / 3', userSelect: 'none' }}
+      role="img"
+      aria-label="Neura Academy owl mascot"
+      variants={bodyV}
+      initial="idle"
+      animate={mood}
+    >
+      <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+
       <motion.div
-        style={{ position: 'absolute', inset: 0, originX: 0.5, originY: 0.97 }}
-        variants={rootV}
-        initial="idle"
+        aria-hidden="true"
+        variants={wingV}
         animate={mood}
-      >
-        {/* লেজ (শরীরের পেছনে) */}
-        <motion.div style={{ ...placement(LAYERS.tail), ...origin(LAYERS.tail) }} variants={tailV}>
-          <img src={src(LAYERS.tail)} alt="" draggable={false} style={imgStyle} />
-        </motion.div>
+        style={{ position: 'absolute', left: '8%', top: '40%', width: '23%', height: '27%', borderRadius: '48% 18% 55% 42%', background: 'linear-gradient(145deg, rgba(55,86,150,.7), rgba(9,25,69,.72))', transformOrigin: '90% 20%', opacity: 0.22, pointerEvents: 'none' }}
+      />
+      <motion.div
+        aria-hidden="true"
+        variants={wingV}
+        animate={mood}
+        style={{ position: 'absolute', right: '8%', top: '40%', width: '23%', height: '27%', borderRadius: '18% 48% 42% 55%', background: 'linear-gradient(215deg, rgba(55,86,150,.7), rgba(9,25,69,.72))', transformOrigin: '10% 20%', opacity: 0.22, pointerEvents: 'none' }}
+      />
 
-        {/* শরীর */}
-        <div style={placement(LAYERS.body)}>
-          <img src={src(LAYERS.body)} alt="" draggable={false} style={imgStyle} />
-        </div>
+      <motion.div
+        key={eyeKey}
+        variants={browV}
+        animate={mood}
+        style={{ position: 'absolute', left: '33.5%', top: '29.8%', width: '12%', height: '2.2%', borderRadius: 999, background: '#4f3b46', transformOrigin: '80% 50%' }}
+      />
+      <motion.div
+        variants={browV}
+        animate={mood}
+        style={{ position: 'absolute', right: '33.5%', top: '29.8%', width: '12%', height: '2.2%', borderRadius: 999, background: '#4f3b46', transformOrigin: '20% 50%' }}
+      />
 
-        {/* মাথা + চোখ + ট্যাসেল একসাথে ঘোরে */}
-        <motion.div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            originX: HEAD_PIVOT.x / CANVAS.w,
-            originY: HEAD_PIVOT.y / CANVAS.h,
-          }}
-          variants={headV}
-        >
-          <div style={placement(LAYERS.head)}>
-            <img src={src(LAYERS.head)} alt="" draggable={false} style={imgStyle} />
-          </div>
-
-          <motion.div
-            style={{ ...placement(LAYERS.eyeL), ...origin(LAYERS.eyeL) }}
-            animate={eyeAnim}
-            transition={eyeTransition}
-          >
-            <img src={src(LAYERS.eyeL)} alt="" draggable={false} style={imgStyle} />
-          </motion.div>
-          <motion.div
-            style={{ ...placement(LAYERS.eyeR), ...origin(LAYERS.eyeR) }}
-            animate={eyeAnim}
-            transition={eyeTransition}
-          >
-            <img src={src(LAYERS.eyeR)} alt="" draggable={false} style={imgStyle} />
-          </motion.div>
-
-          <motion.div
-            style={{ ...placement(LAYERS.tassel), ...origin(LAYERS.tassel) }}
-            variants={tasselV}
-          >
-            <img src={src(LAYERS.tassel)} alt="" draggable={false} style={imgStyle} />
-          </motion.div>
-        </motion.div>
-      </motion.div>
-    </div>
+      <Eye side="left" mood={mood} blink={blink} />
+      <Eye side="right" mood={mood} blink={blink} />
+      <Beak mood={mood} />
+    </motion.div>
   );
 }
