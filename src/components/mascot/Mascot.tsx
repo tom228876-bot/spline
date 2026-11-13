@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
 
 export type MascotMood = 'idle' | 'happy' | 'sad' | 'thinking' | 'wave';
@@ -10,28 +10,20 @@ type MascotProps = {
   className?: string;
 };
 
-const bodyV: Variants = {
-  idle: { y: [0, -2, 0], scaleY: [1, 1.008, 1], transition: { repeat: Infinity, duration: 3.4, ease: 'easeInOut' } },
-  happy: { y: [0, 5, -16, 0], scaleY: [1, 0.97, 1.025, 1], transition: { duration: 0.9, ease: 'easeOut' } },
-  sad: { y: 5, scaleY: 0.985, transition: { duration: 0.55, ease: 'easeOut' } },
-  thinking: { y: [0, -1, 0], transition: { repeat: Infinity, duration: 2.8, ease: 'easeInOut' } },
-  wave: { y: [0, -5, 0], transition: { duration: 0.7, ease: 'easeOut' } },
-};
-
-const wingV: Variants = {
-  idle: { rotate: [0, -1.5, 0], transition: { repeat: Infinity, duration: 3, ease: 'easeInOut' } },
-  happy: { rotate: [0, -9, 7, -5, 0], y: [0, -5, 0, -2, 0], transition: { duration: 0.95, ease: 'easeInOut' } },
-  sad: { rotate: 5, y: 7, transition: { duration: 0.55 } },
-  thinking: { rotate: [0, 2, 0], transition: { repeat: Infinity, duration: 2.4, ease: 'easeInOut' } },
-  wave: { rotate: [0, -18, 8, -15, 0], y: [0, -7, 0, -5, 0], transition: { duration: 1.1, ease: 'easeInOut' } },
+const motionV: Variants = {
+  idle: { y: [0, -2, 0], rotate: [-0.5, 0.5, -0.5], scaleY: [1, 1.006, 1], transition: { repeat: Infinity, duration: 3.2, ease: 'easeInOut' } },
+  happy: { y: [0, 5, -22, 0, -7, 0], rotate: [0, -2, 2, 0], scaleY: [1, 0.96, 1.04, 1], transition: { duration: 1.05, ease: 'easeOut' } },
+  sad: { y: 7, rotate: -2, scaleY: 0.985, transition: { duration: 0.55, ease: 'easeOut' } },
+  thinking: { y: [0, -1, 0], rotate: [0, 2, 0], transition: { repeat: Infinity, duration: 2.6, ease: 'easeInOut' } },
+  wave: { y: [0, -4, 0], rotate: [0, -3, 3, 0], transition: { duration: 0.8, ease: 'easeInOut' } },
 };
 
 const browV: Variants = {
   idle: { rotate: 0, y: 0, transition: { duration: 0.25 } },
-  happy: { rotate: -7, y: 8, transition: { duration: 0.35 } },
-  sad: { rotate: 10, y: 9, transition: { duration: 0.35 } },
-  thinking: { rotate: -9, y: 3, transition: { duration: 0.35 } },
-  wave: { rotate: -2, y: 0, transition: { duration: 0.25 } },
+  happy: { rotate: -8, y: 8, transition: { duration: 0.3, ease: 'easeOut' } },
+  sad: { rotate: 9, y: 8, transition: { duration: 0.3, ease: 'easeOut' } },
+  thinking: { rotate: -12, y: 3, transition: { duration: 0.3 } },
+  wave: { rotate: -3, y: 1, transition: { duration: 0.25 } },
 };
 
 function useBlink() {
@@ -45,8 +37,8 @@ function useBlink() {
         closeTimer = setTimeout(() => {
           setBlink(false);
           schedule();
-        }, 115);
-      }, 2400 + Math.random() * 2800);
+        }, 105);
+      }, 2200 + Math.random() * 3200);
     };
     schedule();
     return () => {
@@ -57,88 +49,59 @@ function useBlink() {
   return blink;
 }
 
-function Eye({ side, mood, blink }: { side: 'left' | 'right'; mood: MascotMood; blink: boolean }) {
+function Pupil({ side, mood, blink }: { side: 'left' | 'right'; mood: MascotMood; blink: boolean }) {
   const isLeft = side === 'left';
-  const gaze = mood === 'thinking' ? (isLeft ? -5 : -7) : mood === 'sad' ? (isLeft ? -2 : 2) : 0;
-  const blinkScale = blink ? 0.08 : mood === 'happy' ? 0.62 : mood === 'sad' ? 0.78 : 1;
-
+  const x = mood === 'thinking' ? (isLeft ? -7 : -8) : mood === 'sad' ? (isLeft ? -2 : 2) : mood === 'happy' ? 0 : 0;
+  const y = mood === 'thinking' ? -2 : mood === 'happy' ? 1 : 0;
   return (
-    <motion.div
+    <motion.span
       aria-hidden="true"
-      animate={{ x: gaze, scaleY: blinkScale }}
-      transition={{ type: 'spring', stiffness: 260, damping: 22, duration: 0.16 }}
+      animate={{ x, y, scaleY: blink ? 0.08 : mood === 'happy' ? 0.84 : 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 24, duration: 0.16 }}
       style={{
-        position: 'absolute', left: isLeft ? '35.1%' : '61.8%', top: '34.9%', width: '9.9%', height: '10.8%',
-        borderRadius: '50%', background: 'linear-gradient(#070b19 0 58%, #02040b 59% 100%)',
-        boxShadow: '0 0 0 3px rgba(8,12,32,.18)', transformOrigin: '50% 50%',
-      }}
-    >
-      <span style={{ position: 'absolute', width: '24%', height: '24%', left: '18%', top: '12%', borderRadius: '50%', background: '#fff' }} />
-      <span style={{ position: 'absolute', width: '11%', height: '11%', left: '50%', top: '24%', borderRadius: '50%', background: '#fff', opacity: 0.8 }} />
-    </motion.div>
-  );
-}
-
-function Beak({ mood }: { mood: MascotMood }) {
-  const talking = mood === 'happy' || mood === 'wave';
-  return (
-    <motion.div
-      aria-hidden="true"
-      animate={talking ? { scaleY: [1, 0.82, 1], y: [0, 2, 0] } : { scaleY: 1, y: 0 }}
-      transition={talking ? { repeat: Infinity, duration: 0.46, ease: 'easeInOut' } : { duration: 0.2 }}
-      style={{
-        position: 'absolute', left: '47.1%', top: '39.8%', width: '5.6%', height: '4.9%',
-        transformOrigin: '50% 25%', clipPath: 'polygon(50% 0, 100% 48%, 50% 100%, 0 48%)',
-        background: 'linear-gradient(145deg, #ffd66a, #e28a16 68%, #b75c09)', filter: 'drop-shadow(0 2px 1px rgba(70,30,0,.22))',
+        position: 'absolute', left: isLeft ? '39.8%' : '62.2%', top: '30.7%', width: '8.1%', height: '9.1%',
+        borderRadius: '50%', background: 'radial-gradient(circle at 32% 25%, #fff 0 9%, #fff0 10%), radial-gradient(circle at 50% 50%, #08102b 0 52%, #02040b 54% 100%)',
+        transformOrigin: '50% 60%', pointerEvents: 'none',
       }}
     />
   );
 }
 
-export default function Mascot({ mood = 'idle', size = 240, src = '/mascot/owl-neutral.png', className }: MascotProps) {
+function Mouth({ mood }: { mood: MascotMood }) {
+  if (mood === 'happy' || mood === 'wave') {
+    return <motion.span aria-hidden="true" animate={{ scaleY: [1, 0.88, 1] }} transition={{ repeat: Infinity, duration: 0.48 }} style={{ position: 'absolute', left: '48.4%', top: '41.2%', width: '7.5%', height: '5.5%', borderRadius: '0 0 50% 50%', background: 'linear-gradient(#8d1f35 0 55%, #f78e9d 56%)', border: '2px solid #9a3140', transformOrigin: '50% 15%' }} />;
+  }
+  if (mood === 'sad') {
+    return <motion.span aria-hidden="true" animate={{ rotate: 180 }} transition={{ duration: 0.3 }} style={{ position: 'absolute', left: '49%', top: '42.2%', width: '5.7%', height: '3.3%', borderBottom: '3px solid #713748', borderRadius: '0 0 50% 50%' }} />;
+  }
+  return <span aria-hidden="true" style={{ position: 'absolute', left: '49.1%', top: '42.4%', width: '5.2%', height: '2.4%', borderBottom: '2px solid #713748', borderRadius: '0 0 50% 50%' }} />;
+}
+
+export default function Mascot({ mood = 'idle', size = 240, src = '/mascot/cat-neutral.png', className }: MascotProps) {
   const blink = useBlink();
-  const eyeKey = useMemo(() => `${mood}-${blink}`, [mood, blink]);
+  const faceTilt = mood === 'thinking' ? -3 : mood === 'sad' ? 2 : 0;
+  const cheekOpacity = mood === 'happy' ? 0.38 : mood === 'sad' ? 0.14 : 0;
 
   return (
     <motion.div
       className={className}
-      style={{ position: 'relative', width: size, aspectRatio: '2 / 3', userSelect: 'none' }}
-      role="img"
-      aria-label="Neura Academy owl mascot"
-      variants={bodyV}
+      variants={motionV}
       initial="idle"
       animate={mood}
+      style={{ position: 'relative', width: size, aspectRatio: '1 / 1', userSelect: 'none', transformOrigin: '50% 92%' }}
+      role="img"
+      aria-label="Neura Academy cat mascot"
     >
       <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
-
-      <motion.div
-        aria-hidden="true"
-        variants={wingV}
-        animate={mood}
-        style={{ position: 'absolute', left: '8%', top: '40%', width: '23%', height: '27%', borderRadius: '48% 18% 55% 42%', background: 'linear-gradient(145deg, rgba(55,86,150,.7), rgba(9,25,69,.72))', transformOrigin: '90% 20%', opacity: 0.22, pointerEvents: 'none' }}
-      />
-      <motion.div
-        aria-hidden="true"
-        variants={wingV}
-        animate={mood}
-        style={{ position: 'absolute', right: '8%', top: '40%', width: '23%', height: '27%', borderRadius: '18% 48% 42% 55%', background: 'linear-gradient(215deg, rgba(55,86,150,.7), rgba(9,25,69,.72))', transformOrigin: '10% 20%', opacity: 0.22, pointerEvents: 'none' }}
-      />
-
-      <motion.div
-        key={eyeKey}
-        variants={browV}
-        animate={mood}
-        style={{ position: 'absolute', left: '33.5%', top: '29.8%', width: '12%', height: '2.2%', borderRadius: 999, background: '#4f3b46', transformOrigin: '80% 50%' }}
-      />
-      <motion.div
-        variants={browV}
-        animate={mood}
-        style={{ position: 'absolute', right: '33.5%', top: '29.8%', width: '12%', height: '2.2%', borderRadius: 999, background: '#4f3b46', transformOrigin: '20% 50%' }}
-      />
-
-      <Eye side="left" mood={mood} blink={blink} />
-      <Eye side="right" mood={mood} blink={blink} />
-      <Beak mood={mood} />
+      <motion.div animate={{ rotate: faceTilt, y: mood === 'sad' ? 5 : 0 }} transition={{ type: 'spring', stiffness: 220, damping: 20 }} style={{ position: 'absolute', inset: 0, transformOrigin: '50% 42%', pointerEvents: 'none' }}>
+        <motion.span aria-hidden="true" animate={{ opacity: cheekOpacity, scale: mood === 'happy' ? 1.08 : 1 }} transition={{ duration: 0.25 }} style={{ position: 'absolute', left: '28%', top: '42%', width: '10%', height: '4%', borderRadius: '50%', background: '#f48b9b', filter: 'blur(2px)' }} />
+        <motion.span aria-hidden="true" animate={{ opacity: cheekOpacity, scale: mood === 'happy' ? 1.08 : 1 }} transition={{ duration: 0.25 }} style={{ position: 'absolute', right: '28%', top: '42%', width: '10%', height: '4%', borderRadius: '50%', background: '#f48b9b', filter: 'blur(2px)' }} />
+        <motion.span variants={browV} animate={mood} aria-hidden="true" style={{ position: 'absolute', left: '34%', top: '25.5%', width: '11%', height: '1.5%', borderRadius: 999, background: '#4a3343', transformOrigin: '85% 50%' }} />
+        <motion.span variants={browV} animate={mood} aria-hidden="true" style={{ position: 'absolute', right: '34%', top: '25.5%', width: '11%', height: '1.5%', borderRadius: 999, background: '#4a3343', transformOrigin: '15% 50%' }} />
+        <Pupil side="left" mood={mood} blink={blink} />
+        <Pupil side="right" mood={mood} blink={blink} />
+        <Mouth mood={mood} />
+      </motion.div>
     </motion.div>
   );
 }
